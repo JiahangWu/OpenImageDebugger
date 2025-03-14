@@ -99,9 +99,94 @@ command script import /path/to/OpenImageDebugger/oid.py
 
 ### MacOS Installation
 
-For information on how to build the plugin on MacOS, refer to the wiki page
-[Building on
-MacOS](https://github.com/OpenImageDebugger/OpenImageDebugger/wiki/Building-on-MacOS).
+On MacOS, you need to specify your ```lldb``` path. For me, I used llvm from ```brew``` instead of ```xcode-select```. To quickly setup by following:
+```
+brew install llvm
+brew --prefix llvm
+echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc                                                                                                          
+source ~/.zshrc
+```
+Then you can check if lldb starts with the correct Python.
+```
+lldb
+(lldb) script
+Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
+>>> import sys; print(sys.path)
+```
+For instance, here I got the following results:
+```
+['/opt/homebrew/Cellar/llvm/19.1.7_1/lib', '/usr/local/OpenImageDebugger', '/opt/homebrew/Cellar/llvm/19.1.7_1/libexec/python3.13/site-packages', '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python313.zip', '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13', '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload', '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages', '/opt/homebrew/Cellar/openvino/2025.0.0/libexec/lib/python3.13/site-packages', '/opt/homebrew/opt/python-tk@3.13/libexec', '.', '/usr/local/OpenImageDebugger']
+```
+
+Make sure ```/opt/homebrew/opt/llvm/bin``` and ```/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13'``` point to the same Python Interpreter.
+
+Then install Qt5 ```brew install qt@5 and export Qt5 path:
+```
+export Qt5_DIR=$(brew --prefix qt@5)/lib/cmake/Qt5
+```
+or
+```
+echo 'export Qt5_DIR=$(brew --prefix qt@5)/lib/cmake/Qt5' >> ~/.zshrc                                                                                                          
+source ~/.zshrc
+```
+Finally, you can proceed with the normal compilation instructions:
+
+```
+git clone https://github.com/OpenImageDebugger/OpenImageDebugger.git
+cd OpenImageDebugger
+git submodule init
+git submodule update
+mkdir build && cd build
+cmake .. BUILD_MODE=release PREFIX=/path/to/installation/folder
+make -j4
+make install
+```
+(To do: Check this if it's necessary)
+Edit the file `~/.lldbinit` (create it if it doesn't exist) and append the following line :
+
+```bash
+command script import /path/to/OpenImageDebugger/oid.py
+```
+
+
+
+Now, let's test it:
+```
+c++ ../testbench/main.cpp -std=c++11 -g -o test
+lldb test
+command script import /path/to/installation/folder/OpenImageDebugger/oidwindow.app/Contents/MacOS/oid.py
+break set -f main.cpp -l 344
+run
+```
+
+Also, you can test your installation following the next section.
+
+#### Using OID with VsCode
+
+Install vscode extension ```Codelldb```.
+
+In ```.vscode/settings.json```, add this (replacing your path):
+```
+{
+ "lldb.library": "/opt/homebrew/Cellar/llvm/19.1.7_1/lib/liblldb.19.1.7.dylib"
+},
+```
+In ```.vscode/launch.json```, add this:
+```
+{
+     "type": "lldb",
+     "request": "launch",
+     "name": "test OID",
+     "program": "${workspaceFolder}/build/TEST",
+     "args": [],
+     "cwd": "${workspaceFolder}",
+     "initCommands": ["command script import /<Path OID Installed>/oid.py"],
+},
+```
+
+NOW, CONGRATULATIONS, FINISHED.
+
+
 
 ### Testing your installation
 
